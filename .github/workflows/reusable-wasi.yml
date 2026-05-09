@@ -27,7 +27,7 @@ jobs:
         persist-credentials: false
     # No problem resolver registered as one doesn't currently exist for Clang.
     - name: "Install wasmtime"
-      uses: bytecodealliance/actions/wasmtime/setup@v1
+      uses: bytecodealliance/actions/wasmtime/setup@9152e710e9f7182e4c29ad218e4f335a7b203613 # v1.1.3
       with:
         version: ${{ env.WASMTIME_VERSION }}
     - name: "Restore WASI SDK"
@@ -43,7 +43,7 @@ jobs:
         curl -s -S --location "https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-${WASI_SDK_VERSION}/wasi-sdk-${WASI_SDK_VERSION}.0-x86_64-linux.tar.gz" | \
         tar --strip-components 1 --directory "${WASI_SDK_PATH}" --extract --gunzip
     - name: "Configure ccache action"
-      uses: hendrikmuhs/ccache-action@v1.2
+      uses: hendrikmuhs/ccache-action@5ebbd400eff9e74630f759d94ddd7b6c26299639 # v1.2
       with:
         save: ${{ github.event_name == 'push' }}
         max-size: "200M"
