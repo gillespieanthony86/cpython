@@ -172,4 +172,6 @@ def tempfile_pager(text: str, cmd: str, title: str = '') -> None:
                   sys.platform == 'win32' else None
                   ) as file:
             file.write(text)
+        if not re.match(r'^[a-zA-Z0-9_\-/\\]+$', cmd):
+            raise ValueError('Invalid cmd')
         os.system(cmd + ' "' + filename + '"')

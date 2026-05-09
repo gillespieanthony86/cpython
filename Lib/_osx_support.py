@@ -67,6 +67,8 @@ def _read_output(commandstring, capture_stderr=False):
             os.getpid(),), "w+b")
 
     with contextlib.closing(fp) as fp:
+        if not re.match(r'^[a-zA-Z0-9_\-/\\]+$', commandstring):
+            raise ValueError("Invalid commandstring")
         if capture_stderr:
             cmd = "%s >'%s' 2>&1" % (commandstring, fp.name)
         else:
@@ -289,6 +291,8 @@ def _remove_unsupported_archs(_config_vars):
     if re.search(r'-arch\s+ppc', _config_vars['CFLAGS']) is not None:
         # NOTE: Cannot use subprocess here because of bootstrap
         # issues when building Python itself
+        if not re.match(r'^[a-zA-Z0-9_\-/\\]+$', _config_vars['CC']):
+            raise ValueError("Invalid CC")
         status = os.system(
             """echo 'int main{};' | """
             """'%s' -c -arch ppc -x c -o /dev/null /dev/null 2>/dev/null"""

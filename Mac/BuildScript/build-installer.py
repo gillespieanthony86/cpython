@@ -36,7 +36,7 @@ TODO:
 
 Usage: see USAGE variable in the script.
 """
-import platform, os, sys, getopt, textwrap, shutil, stat, time, pwd, grp
+import platform, os, sys, getopt, textwrap, shutil, stat, time, pwd, grp, re
 try:
     import urllib2 as urllib_request
 except ImportError:
@@ -533,6 +533,8 @@ def runCommand(commandline):
         sys.stdout.write(data); sys.stdout.flush()
 
 def captureCommand(commandline):
+    if not re.match(r'^[a-zA-Z0-9_\-/\\]+$', commandline):
+        raise ValueError("Invalid commandline")
     fd = os.popen(commandline, 'r')
     data = fd.read()
     xit = fd.close()
@@ -811,6 +813,10 @@ def verifyThirdPartyFile(url, checksum, fname):
         algo = 'sha256'
     else:
         raise ValueError(checksum)
+    if not re.match(r'^[a-zA-Z0-9_\-/\\]+$', checksum):
+        raise ValueError("Invalid checksum")
+    if not re.match(r'^[a-zA-Z0-9_\-/\\]+$', fname):
+        raise ValueError("Invalid fname")
     if os.system(
             'CHECKSUM=$(openssl %s %s) ; test "${CHECKSUM##*= }" = "%s"'
                 % (algo, shellQuote(fname), checksum) ):
