@@ -87,8 +87,12 @@ def copy_includes(makefile, suffix):
 
 
 def run_configure(configure, do_script):
+    if not re.match(r'^[a-zA-Z0-9._\-/\\]+$', configure):
+        raise ValueError('Invalid configure')
     print("perl Configure "+configure+" no-idea no-mdc2")
     os.system("perl Configure "+configure+" no-idea no-mdc2")
+    if not re.match(r'^[a-zA-Z0-9._\-/\\]+$', do_script):
+        raise ValueError('Invalid do_script')
     print(do_script)
     os.system(do_script)
 

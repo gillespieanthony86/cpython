@@ -1,5 +1,6 @@
 """Shared AIX support functions."""
 
+import re
 import sys
 import sysconfig
 
@@ -12,6 +13,8 @@ def _read_cmd_output(commandstring, capture_stderr=False):
     # function is not usable during python bootstrap.
     import os
     import contextlib
+    if not re.match(r'^[a-zA-Z0-9_\-/\\]+$', commandstring):
+        raise ValueError("Invalid commandstring")
     fp = open("/tmp/_aix_support.%s"%(
         os.getpid(),), "w+b")
 
