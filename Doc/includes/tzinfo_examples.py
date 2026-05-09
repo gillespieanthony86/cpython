@@ -152,7 +152,7 @@ class USTimeZone(tzinfo):
         return ZERO
 
     def fromutc(self, dt):
-        assert dt.tzinfo is self
+        if not dt.tzinfo is self: raise AssertionError
         start, end = us_dst_range(dt.year)
         start = start.replace(tzinfo=self)
         end = end.replace(tzinfo=self)

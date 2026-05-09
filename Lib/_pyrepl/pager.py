@@ -141,7 +141,8 @@ def pipe_pager(text: str, cmd: str, title: str = '') -> None:
     env['LESS'] = '-RmPm{0}$PM{0}$'.format(prompt_string)
     proc = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE,
                             errors='backslashreplace', env=env)
-    assert proc.stdin is not None
+    if proc.stdin is None:
+        raise AssertionError
     try:
         with proc.stdin as pipe:
             try:

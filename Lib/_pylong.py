@@ -94,7 +94,8 @@ def compute_powers(w, base, more_than, *, need_hi=False, show=False):
         if lo > more_than and w-1 not in cands and lo not in cands:
             extra.add(lo)
             cands.add(lo)
-    assert need_hi or not extra
+    if not need_hi and extra:
+        raise AssertionError
 
     d = {}
     for n in sorted(need | extra):
@@ -113,7 +114,8 @@ def compute_powers(w, base, more_than, *, need_hi=False, show=False):
             if hi != lo:
                 if show:
                     print(" * base", end="")
-                assert 2 * lo + 1 == n
+                if not 2 * lo + 1 == n:
+                    raise AssertionError()
                 result *= base
         else: # rare
             if show:
@@ -123,9 +125,11 @@ def compute_powers(w, base, more_than, *, need_hi=False, show=False):
             print(" at", n, "needed" if n in need else "extra")
         d[n] = result
 
-    assert need <= d.keys()
+    if not need <= d.keys():
+        raise AssertionError()
     if excess := d.keys() - need:
-        assert need_hi
+        if not need_hi:
+            raise AssertionError()
         for n in excess:
             del d[n]
     return d
@@ -278,7 +282,7 @@ def _dec_str_to_int_inner(s, *, GUARD=8):
     D = decimal.Decimal
     result = bytearray()
     # See notes at end of file for discussion of GUARD.
-    assert GUARD > 0 # if 0, `decimal` can blow up - .prec 0 not allowed
+    if not GUARD > 0: raise AssertionError # if 0, `decimal` can blow up - .prec 0 not allowed
 
     def inner(n, w):
         #assert n < D256 ** w # required, but too expensive to check
@@ -312,7 +316,8 @@ def _dec_str_to_int_inner(s, *, GUARD=8):
             lo = n - hi * p256
             # Because we've been uniformly rounding down, `hi` is a
             # lower bound on the correct quotient.
-            assert lo >= 0
+            if not lo >= 0:
+                raise AssertionError
             # Adjust quotient up if needed. It usually isn't. In random
             # testing on inputs through 5 billion digit strings, the
             # test triggered once in about 200 thousand tries.
@@ -719,7 +724,8 @@ if 0:
             inner(hi)
         inner(w)
         exp = compute_powers(w, 1, limit, need_hi=need_hi)
-        assert exp.keys() == need
+        if exp.keys() != need:
+            raise AssertionError()
 
     from itertools import chain
     for need_hi in (False, True):

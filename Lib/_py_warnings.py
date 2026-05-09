@@ -101,7 +101,7 @@ def _set_context(context):
 
 
 def _new_context():
-    assert _use_context
+    if not _use_context: raise AssertionError
     old_context = _wm._get_context()
     new_context = old_context.copy()
     _wm._set_context(new_context)

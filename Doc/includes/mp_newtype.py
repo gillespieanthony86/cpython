@@ -57,16 +57,20 @@ def test():
     f1 = manager.Foo1()
     f1.f()
     f1.g()
-    assert not hasattr(f1, '_h')
-    assert sorted(f1._exposed_) == sorted(['f', 'g'])
+    if hasattr(f1, '_h'):
+        raise AssertionError
+    if sorted(f1._exposed_) != sorted(['f', 'g']):
+        raise AssertionError
 
     print('-' * 20)
 
     f2 = manager.Foo2()
     f2.g()
     f2._h()
-    assert not hasattr(f2, 'f')
-    assert sorted(f2._exposed_) == sorted(['g', '_h'])
+    if hasattr(f2, 'f'):
+        raise AssertionError
+    if sorted(f2._exposed_) != sorted(['g', '_h']):
+        raise AssertionError
 
     print('-' * 20)
 

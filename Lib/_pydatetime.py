@@ -55,7 +55,7 @@ def _days_before_year(year):
 
 def _days_in_month(year, month):
     "year, month -> number of days in that month in that year."
-    assert 1 <= month <= 12, month
+    if not 1 <= month <= 12: raise AssertionError(month)
     if month == 2 and _is_leap(year):
         return 29
     return _DAYS_IN_MONTH[month]
@@ -67,9 +67,9 @@ def _days_before_month(year, month):
 
 def _ymd2ord(year, month, day):
     "year, month, day -> ordinal, considering 01-Jan-0001 as day 1."
-    assert 1 <= month <= 12, f"month must be in 1..12, not {month}"
+    if not 1 <= month <= 12: raise AssertionError(f"month must be in 1..12, not {month}")
     dim = _days_in_month(year, month)
-    assert 1 <= day <= dim, f"day must be in 1..{dim}, not {day}"
+    if not 1 <= day <= dim: raise AssertionError(f"day must be in 1..{dim}, not {day}")
     return (_days_before_year(year) +
             _days_before_month(year, month) +
             day)
@@ -80,15 +80,18 @@ _DI4Y   = _days_before_year(5)      #    "    "   "   "   4   "
 
 # A 4-year cycle has an extra leap day over what we'd get from pasting
 # together 4 single years.
-assert _DI4Y == 4 * 365 + 1
+if _DI4Y != 4 * 365 + 1:
+    raise AssertionError
 
 # Similarly, a 400-year cycle has an extra leap day over what we'd get from
 # pasting together 4 100-year cycles.
-assert _DI400Y == 4 * _DI100Y + 1
+if _DI400Y != 4 * _DI100Y + 1:
+    raise AssertionError
 
 # OTOH, a 100-year cycle has one fewer leap day than we'd get from
 # pasting together 25 4-year cycles.
-assert _DI100Y == 25 * _DI4Y - 1
+if _DI100Y != 25 * _DI4Y - 1:
+    raise AssertionError
 
 def _ord2ymd(n):
     "ordinal -> (year, month, day), considering 01-Jan-0001 as day 1."
@@ -133,20 +136,20 @@ def _ord2ymd(n):
 
     year += n100 * 100 + n4 * 4 + n1
     if n1 == 4 or n100 == 4:
-        assert n == 0
+        if n != 0: raise AssertionError
         return year-1, 12, 31
 
     # Now the year is correct, and n is the offset from January 1.  We find
     # the month via an estimate that's either exact or one too large.
     leapyear = n1 == 3 and (n4 != 24 or n100 == 3)
-    assert leapyear == _is_leap(year)
+        if leapyear != _is_leap(year): raise AssertionError
     month = (n + 50) >> 5
     preceding = _DAYS_BEFORE_MONTH[month] + (month > 2 and leapyear)
     if preceding > n:  # estimate is too large
         month -= 1
         preceding -= _DAYS_IN_MONTH[month] + (month == 2 and leapyear)
     n -= preceding
-    assert 0 <= n < _days_in_month(year, month)
+    if not (0 <= n < _days_in_month(year, month)): raise AssertionError
 
     # Now the year and month are correct, and n is the offset from the
     # start of that month:  we're done!
@@ -243,7 +246,8 @@ def _wrap_strftime(object, format, timetuple):
                             zreplace = _format_offset(object.utcoffset(), sep="")
                         else:
                             zreplace = ""
-                    assert '%' not in zreplace
+                    if '%' in zreplace:
+                        raise AssertionError
                     newformat.append(zreplace)
                 elif ch == ':':
                     if i < n:
@@ -255,7 +259,8 @@ def _wrap_strftime(object, format, timetuple):
                                     colonzreplace = _format_offset(object.utcoffset(), sep=":")
                                 else:
                                     colonzreplace = ""
-                            assert '%' not in colonzreplace
+                            if '%' in colonzreplace:
+                                raise AssertionError
                             newformat.append(colonzreplace)
                         else:
                             push('%')
@@ -304,7 +309,8 @@ def _find_isoformat_datetime_separator(dtstr):
     if len_dtstr == 7:
         return 7
 
-    assert len_dtstr > 7
+    if not len_dtstr > 7:
+        raise AssertionError
     date_separator = "-"
     week_indicator = "W"
 
@@ -358,7 +364,8 @@ def _find_isoformat_datetime_separator(dtstr):
 def _parse_isoformat_date(dtstr):
     # It is assumed that this is an ASCII-only string of lengths 7, 8 or 10,
     # see the comment on Modules/_datetimemodule.c:_find_isoformat_datetime_separator
-    assert len(dtstr) in (7, 8, 10)
+    if len(dtstr) not in (7, 8, 10):
+        raise AssertionError
     year = int(dtstr[0:4])
     has_sep = dtstr[4] == '-'
 
@@ -553,7 +560,8 @@ def _check_tzname(name):
 # Else offset is checked for being in range.
 # If it is, its integer value is returned.  Else ValueError is raised.
 def _check_utc_offset(name, offset):
-    assert name in ("utcoffset", "dst")
+    if name not in ("utcoffset", "dst"):
+        raise AssertionError()
     if offset is None:
         return
     if not isinstance(offset, timedelta):
@@ -681,41 +689,43 @@ class timedelta:
         if isinstance(days, float):
             dayfrac, days = _math.modf(days)
             daysecondsfrac, daysecondswhole = _math.modf(dayfrac * (24.*3600.))
-            assert daysecondswhole == int(daysecondswhole)  # can't overflow
+            if daysecondswhole != int(daysecondswhole): raise AssertionError  # can't overflow
             s = int(daysecondswhole)
-            assert days == int(days)
+            if days != int(days): raise AssertionError
             d = int(days)
         else:
             daysecondsfrac = 0.0
             d = days
-        assert isinstance(daysecondsfrac, float)
-        assert abs(daysecondsfrac) <= 1.0
+        if not isinstance(daysecondsfrac, float): raise AssertionError
+        if abs(daysecondsfrac) > 1.0: raise AssertionError
         assert isinstance(d, int)
-        assert abs(s) <= 24 * 3600
+        if abs(s) > 24 * 3600: raise AssertionError
         # days isn't referenced again before redefinition
 
         if isinstance(seconds, float):
             secondsfrac, seconds = _math.modf(seconds)
-            assert seconds == int(seconds)
+            if seconds != int(seconds): raise AssertionError
             seconds = int(seconds)
             secondsfrac += daysecondsfrac
             assert abs(secondsfrac) <= 2.0
         else:
             secondsfrac = daysecondsfrac
         # daysecondsfrac isn't referenced again
-        assert isinstance(secondsfrac, float)
-        assert abs(secondsfrac) <= 2.0
+        if not isinstance(secondsfrac, float): raise AssertionError
+        if abs(secondsfrac) > 2.0: raise AssertionError
 
-        assert isinstance(seconds, int)
+        if not isinstance(seconds, int): raise AssertionError
         days, seconds = divmod(seconds, 24*3600)
         d += days
         s += int(seconds)    # can't overflow
         assert isinstance(s, int)
-        assert abs(s) <= 2 * 24 * 3600
+        if abs(s) > 2 * 24 * 3600:
+            raise AssertionError
         # seconds isn't referenced again before redefinition
 
         usdouble = secondsfrac * 1e6
-        assert abs(usdouble) < 2.1e6    # exact value not critical
+        if abs(usdouble) >= 2.1e6:    # exact value not critical
+            raise AssertionError
         # secondsfrac isn't referenced again
 
         if isinstance(microseconds, float):
@@ -731,10 +741,14 @@ class timedelta:
             d += days
             s += seconds
             microseconds = round(microseconds + usdouble)
-        assert isinstance(s, int)
-        assert isinstance(microseconds, int)
-        assert abs(s) <= 3 * 24 * 3600
-        assert abs(microseconds) < 3.1e6
+        if not isinstance(s, int):
+            raise AssertionError
+        if not isinstance(microseconds, int):
+            raise AssertionError
+        if abs(s) > 3 * 24 * 3600:
+            raise AssertionError
+        if abs(microseconds) >= 3.1e6:
+            raise AssertionError
 
         # Just a little bit of carrying possible for microseconds and seconds.
         seconds, us = divmod(microseconds, 1000000)
@@ -742,9 +756,12 @@ class timedelta:
         days, s = divmod(s, 24*3600)
         d += days
 
-        assert isinstance(d, int)
-        assert isinstance(s, int) and 0 <= s < 24*3600
-        assert isinstance(us, int) and 0 <= us < 1000000
+        if not isinstance(d, int):
+            raise AssertionError()
+        if not (isinstance(s, int) and 0 <= s < 24*3600):
+            raise AssertionError()
+        if not (isinstance(us, int) and 0 <= us < 1000000):
+            raise AssertionError()
 
         if abs(d) > 999999999:
             raise OverflowError("timedelta # of days is too large: %d" % d)
@@ -930,7 +947,8 @@ class timedelta:
             return NotImplemented
 
     def _cmp(self, other):
-        assert isinstance(other, timedelta)
+        if not isinstance(other, timedelta):
+            raise AssertionError
         return _cmp(self._getstate(), other._getstate())
 
     def __hash__(self):
@@ -1204,8 +1222,10 @@ class date:
         return NotImplemented
 
     def _cmp(self, other):
-        assert isinstance(other, date)
-        assert not isinstance(other, datetime)
+        if not isinstance(other, date):
+            raise AssertionError
+        if isinstance(other, datetime):
+            raise AssertionError
         y, m, d = self._year, self._month, self._day
         y2, m2, d2 = other._year, other._month, other._day
         return _cmp((y, m, d), (y2, m2, d2))
@@ -1526,7 +1546,8 @@ class time:
             return NotImplemented
 
     def _cmp(self, other, allow_mixed=False):
-        assert isinstance(other, time)
+        if not isinstance(other, time):
+            raise AssertionError
         mytz = self._tzinfo
         ottz = other._tzinfo
         myoff = otoff = None
@@ -1566,7 +1587,8 @@ class time:
             else:
                 h, m = divmod(timedelta(hours=self.hour, minutes=self.minute) - tzoff,
                               timedelta(hours=1))
-                assert not m % timedelta(minutes=1), "whole minute"
+                if m % timedelta(minutes=1):
+                    raise AssertionError("whole minute")
                 m //= timedelta(minutes=1)
                 if 0 <= h < 24:
                     self._hashcode = hash(time(h, m, self.second, self.microsecond))
@@ -2024,7 +2046,8 @@ class datetime(date):
                 return u1
         else:
             b = t1 - u1
-            assert a != b
+            if not a != b:
+                raise AssertionError
         u2 = t - b
         t2 = local(u2)
         if t2 == t:
@@ -2188,7 +2211,7 @@ class datetime(date):
             assert s[-1:] == ")"
             s = s[:-1] + ", tzinfo=%r" % self._tzinfo + ")"
         if self._fold:
-            assert s[-1:] == ")"
+            if not s[-1:] == ")": raise AssertionError
             s = s[:-1] + ", fold=1)"
         return s
 
@@ -2272,7 +2295,8 @@ class datetime(date):
             return NotImplemented
 
     def _cmp(self, other, allow_mixed=False):
-        assert isinstance(other, datetime)
+        if not isinstance(other, datetime):
+            raise AssertionError
         mytz = self._tzinfo
         ottz = other._tzinfo
         myoff = otoff = None
