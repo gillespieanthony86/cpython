@@ -104,6 +104,7 @@ import math
 import time
 import inspect
 import sys
+import ast
 
 from os.path import isfile, split, join
 from pathlib import Path
@@ -182,7 +183,7 @@ def config_dict(filename):
         key = key.strip()
         value = value.strip()
         if value in ["True", "False", "None", "''", '""']:
-            value = eval(value)
+            value = ast.literal_eval(value)
         else:
             try:
                 if "." in value:

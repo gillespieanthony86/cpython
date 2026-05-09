@@ -5,6 +5,8 @@
 # Modified Author:  Donghee Na <donghee.na92@gmail.com>
 #
 
+import ast
+
 
 class BufferedFiller:
     def __init__(self, column=78):
@@ -189,7 +191,7 @@ def loadmap(fo, natcol=0, unicol=1, sbcs=0):
         if not line or len(line.split()) < 2:
             continue
 
-        row = [eval(e) for e in line.split()]
+        row = [ast.literal_eval(e) for e in line.split()]
         loc, uni = row[natcol], row[unicol]
         if loc >= 0x100 or sbcs:
             decmap.setdefault((loc >> 8), {})

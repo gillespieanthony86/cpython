@@ -10,6 +10,7 @@
 
 # XXX TO DO:
 # - for classes/modules, add "open source" to object browser
+import ast
 from reprlib import Repr
 
 from idlelib.tree import TreeItem, TreeNode, ScrolledCanvas
@@ -34,7 +35,7 @@ class ObjectTreeItem(TreeItem):
         return self.setfunction is not None
     def SetText(self, text):
         try:
-            value = eval(text)
+            value = ast.literal_eval(text)
             self.setfunction(value)
         except:
             pass
