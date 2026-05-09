@@ -114,7 +114,8 @@ def test():
                 if i == 5:
                     raise AssertionError('expected ZeroDivisionError')
 
-        assert i == 9
+        if i != 9:
+            raise AssertionError()
         print('\tGot ZeroDivisionError as expected from IMapIterator.next()')
         print()
 

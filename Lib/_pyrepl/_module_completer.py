@@ -57,7 +57,8 @@ class ModuleCompleter:
     def complete(self, from_name: str | None, name: str | None) -> list[str]:
         if from_name is None:
             # import x.y.z<tab>
-            assert name is not None
+            if name is None:
+                raise AssertionError
             path, prefix = self.get_path_and_prefix(name)
             modules = self.find_modules(path, prefix)
             return [self.format_completion(path, module) for module in modules]

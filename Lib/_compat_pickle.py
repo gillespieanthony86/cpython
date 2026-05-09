@@ -162,9 +162,11 @@ for excname in MULTIPROCESSING_EXCEPTIONS:
 
 # Same, but for 3.x to 2.x
 REVERSE_IMPORT_MAPPING = dict((v, k) for (k, v) in IMPORT_MAPPING.items())
-assert len(REVERSE_IMPORT_MAPPING) == len(IMPORT_MAPPING)
+if len(REVERSE_IMPORT_MAPPING) != len(IMPORT_MAPPING):
+    raise AssertionError()
 REVERSE_NAME_MAPPING = dict((v, k) for (k, v) in NAME_MAPPING.items())
-assert len(REVERSE_NAME_MAPPING) == len(NAME_MAPPING)
+if len(REVERSE_NAME_MAPPING) != len(NAME_MAPPING):
+    raise AssertionError()
 
 # Non-mutual mappings.
 

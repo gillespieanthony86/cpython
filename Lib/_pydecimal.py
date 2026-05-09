@@ -2231,8 +2231,10 @@ class Decimal(object):
         # An exact power of 10 is representable, but can convert to a string
         # of any length. But an exact power of 10 shouldn't be possible at
         # this point.
-        assert xc > 1, self
-        assert xc % 10 != 0, self
+        if not xc > 1:
+            raise AssertionError(self)
+        if xc % 10 == 0:
+            raise AssertionError(self)
         str_xc = str(xc)
         if len(str_xc) > p:
             return None

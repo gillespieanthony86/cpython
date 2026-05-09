@@ -122,7 +122,8 @@ class ABCMeta(type):
         # Check the subclass hook
         ok = cls.__subclasshook__(subclass)
         if ok is not NotImplemented:
-            assert isinstance(ok, bool)
+            if not isinstance(ok, bool):
+                raise AssertionError
             if ok:
                 cls._abc_cache.add(subclass)
             else:
