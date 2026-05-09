@@ -121,6 +121,8 @@ def print_env(env):
 
 def android_env(host):
     if host:
+        if not re.match(r'^[a-zA-Z0-9_\-./\\]+$', host):
+            raise ValueError(f"Invalid host value: {host}")
         prefix = subdir(host) / "prefix"
     else:
         prefix = ANDROID_DIR / "prefix"
@@ -128,12 +130,19 @@ def android_env(host):
         sysconfig_filename = next(sysconfig_files).name
         host = re.fullmatch(r"_sysconfigdata__android_(.+).py", sysconfig_filename)[1]
 
-    env_script = ANDROID_DIR / "android-env.sh"
+    if not re.match(r'^[a-zA-Z0-9_\-./\\]+$', host):
+        raise ValueError(f"Invalid host value: {host}")
+    prefix_str = str(prefix)
+    if not re.match(r'^[a-zA-Z0-9_\-./\\]+$', prefix_str):
+        raise ValueError(f"Invalid prefix value: {prefix_str}")
+    env_script_str = str(ANDROID_DIR / "android-env.sh")
+    if not re.match(r'^[a-zA-Z0-9_\-./\\]+$', env_script_str):
+        raise ValueError(f"Invalid env_script value: {env_script_str}")
     env_output = subprocess.run(
         f"set -eu; "
         f"HOST={host}; "
-        f"PREFIX={prefix}; "
-        f". {env_script}; "
+        f"PREFIX={prefix_str}; "
+        f". {env_script_str}; "
         f"export",
         check=True, shell=True, capture_output=True, encoding='utf-8',
     ).stdout
@@ -150,7 +159,7 @@ def android_env(host):
                 env[key] = value
 
     if not env:
-        raise ValueError(f"Found no variables in {env_script.name} output:\n"
+        raise ValueError(f"Found no variables in {Path(env_script_str).name} output:\n"
                          + env_output)
     return env
 
