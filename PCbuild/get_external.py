@@ -3,11 +3,37 @@
 import argparse
 import os
 import pathlib
+import re
 import sys
 import time
 import urllib.error
 import urllib.request
 import zipfile
+from urllib.parse import urlparse, urlunparse
+
+
+def build_validated_url(base_url: str, org: str, repo: str, commit_hash: str) -> str:
+    try:
+        # Minimal path validation
+        if "/../" in base_url or re.search(r"/%2e%2e/", base_url, re.IGNORECASE):
+            raise ValueError("Invalid path")
+        
+        parsed = urlparse(base_url)
+        
+        # Validate path parameters
+        if not re.fullmatch(r"[A-Za-z0-9_-]+", org):
+            raise ValueError("Invalid parameter")
+        if not re.fullmatch(r"[A-Za-z0-9_-]+", repo):
+            raise ValueError("Invalid parameter")
+        if not re.fullmatch(r"[A-Za-z0-9_-]+", commit_hash):
+            raise ValueError("Invalid parameter")
+        
+        # Rebuild path from fixed literals + validated segments
+        parsed = parsed._replace(path=f"/{org}/{repo}/archive/{commit_hash}.zip")
+        
+        return urlunparse(parsed)
+    except Exception:
+        raise ValueError("Invalid URL")
 
 
 def retrieve_with_retries(download_location, output_path, reporthook,
@@ -31,7 +57,7 @@ def retrieve_with_retries(download_location, output_path, reporthook,
 
 def fetch_zip(commit_hash, zip_dir, *, org='python', binary=False, verbose):
     repo = f'cpython-{"bin" if binary else "source"}-deps'
-    url = f'https://github.com/{org}/{repo}/archive/{commit_hash}.zip'
+    url = build_validated_url('https://github.com', org, repo, commit_hash)
     reporthook = None
     if verbose:
         reporthook = print

@@ -1,12 +1,39 @@
 """Implementation of the DOM Level 3 'LS-Load' feature."""
 
 import copy
+import re
 import xml.dom
+from urllib.parse import urlparse, urlunparse
 
 from xml.dom.NodeFilter import NodeFilter
 
 
 __all__ = ["DOMBuilder", "DOMEntityResolver", "DOMInputSource"]
+
+
+def _validate_url(url: str) -> str:
+    try:
+        # Minimal path validation
+        if "/../" in url or re.search(r"/%2e%2e/", url, re.IGNORECASE):
+            raise ValueError("Invalid path")
+        
+        parsed = urlparse(url)
+        
+        # Protocol check
+        if parsed.scheme not in ("http", "https"):
+            raise ValueError("Invalid protocol")
+        
+        # Host check
+        if not parsed.hostname:
+            raise ValueError("Invalid host")
+        
+        allowed_domains = ["example.com"]  # add your allowed domains here
+        if parsed.hostname.lower() not in allowed_domains:
+            raise ValueError("Invalid host")
+        
+        return urlunparse(parsed)
+    except Exception:
+        raise ValueError("Invalid URL")
 
 
 class Options:
@@ -191,7 +218,8 @@ class DOMBuilder:
         fp = input.byteStream
         if fp is None and input.systemId:
             import urllib.request
-            fp = urllib.request.urlopen(input.systemId)
+            validated_url = _validate_url(input.systemId)
+            fp = urllib.request.urlopen(validated_url)
         return self._parse_bytestream(fp, options)
 
     def parseWithContext(self, input, cnode, action):

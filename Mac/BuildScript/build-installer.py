@@ -37,10 +37,13 @@ TODO:
 Usage: see USAGE variable in the script.
 """
 import platform, os, sys, getopt, textwrap, shutil, stat, time, pwd, grp
+import re
 try:
     import urllib2 as urllib_request
+    from urlparse import urlparse, urlunparse
 except ImportError:
     import urllib.request as urllib_request
+    from urllib.parse import urlparse, urlunparse
 
 STAT_0o755 = ( stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR
              | stat.S_IRGRP |                stat.S_IXGRP
@@ -773,11 +776,44 @@ def extractArchive(builddir, archiveName):
     finally:
         os.chdir(curdir)
 
+def build_validated_url(url: str) -> str:
+    try:
+        # Minimal path validation
+        if "/../" in url or re.search(r"/%2e%2e/", url, re.IGNORECASE):
+            raise ValueError("Invalid path")
+        
+        parsed = urlparse(url)
+        
+        # Protocol check
+        if parsed.scheme not in ("http", "https"):
+            raise ValueError("Invalid protocol")
+        
+        # Host check
+        if not parsed.hostname:
+            raise ValueError("Invalid host")
+        
+        allowed_domains = [
+            "github.com",
+            "prdownloads.sourceforge.net",
+            "tukaani.org",
+            "ftp.gnu.org",
+            "www.sqlite.org",
+            "www.bytereef.org",
+            "download.oracle.com"
+        ]
+        if parsed.hostname.lower() not in allowed_domains:
+            raise ValueError("Invalid host")
+        
+        return urlunparse(parsed)
+    except Exception:
+        raise ValueError("Invalid URL")
+
 def downloadURL(url, fname):
     """
     Download the contents of the url into the file.
     """
-    fpIn = urllib_request.urlopen(url)
+    validated_url = build_validated_url(url)
+    fpIn = urllib_request.urlopen(validated_url)
     fpOut = open(fname, 'wb')
     block = fpIn.read(10240)
     try:

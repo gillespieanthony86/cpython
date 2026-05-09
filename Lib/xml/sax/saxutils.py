@@ -6,6 +6,7 @@ convenience of application and driver writers.
 import os, urllib.parse, urllib.request
 import io
 import codecs
+import re
 from . import handler
 from . import xmlreader
 
@@ -335,6 +336,27 @@ class XMLFilterBase(xmlreader.XMLReader):
 
 # --- Utility functions
 
+def _validate_url(url: str) -> str:
+    try:
+        # Minimal path validation
+        if "/../" in url or re.search(r"/%2e%2e/", url, re.IGNORECASE):
+            raise ValueError("Invalid path")
+        
+        parsed = urllib.parse.urlparse(url)
+        
+        # Protocol + host checks
+        if parsed.scheme not in ("http", "https"):
+            raise ValueError("Invalid protocol")
+        if not parsed.hostname:
+            raise ValueError("Invalid host")
+        allowed_domains = ["example.com"]  # add your allowed domains here
+        if parsed.hostname.lower() not in allowed_domains:
+            raise ValueError("Invalid host")
+        
+        return urllib.parse.urlunparse(parsed)
+    except Exception:
+        raise ValueError("Invalid URL")
+
 def prepare_input_source(source, base=""):
     """This function takes an InputSource and an optional base URL and
     returns a fully resolved InputSource object ready for reading."""
@@ -361,8 +383,10 @@ def prepare_input_source(source, base=""):
             source.setSystemId(sysidfilename)
             f = open(sysidfilename, "rb")
         else:
-            source.setSystemId(urllib.parse.urljoin(base, sysid))
-            f = urllib.request.urlopen(source.getSystemId())
+            joined_url = urllib.parse.urljoin(base, sysid)
+            validated_url = _validate_url(joined_url)
+            source.setSystemId(validated_url)
+            f = urllib.request.urlopen(validated_url)
 
         source.setByteStream(f)
 
