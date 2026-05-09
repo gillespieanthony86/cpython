@@ -61,6 +61,27 @@ const stderr = (charCode) => {
 
 const stdinBuffer = new StdinBuffer();
 
+function buildValidatedUrl(baseUrl, major, minor) {
+  try {
+    const url = new URL(baseUrl);
+    
+    // Validate path parameters
+    if (!/^[0-9]+$/.test(major)) {
+      throw new Error('Invalid parameter');
+    }
+    if (!/^[0-9]+$/.test(minor)) {
+      throw new Error('Invalid parameter');
+    }
+    
+    // Rebuild pathname from fixed literals + validated segments
+    url.pathname = `/python${major}.${minor}.zip`;
+    
+    return url.href;
+  } catch {
+    throw new Error('Invalid URL');
+  }
+}
+
 const emscriptenSettings = {
   noInitialRun: true,
   stdin: stdinBuffer.stdin,
@@ -76,7 +97,7 @@ const emscriptenSettings = {
     // Prevent complaints about not finding exec-prefix by making a lib-dynload directory
     Module.FS.mkdirTree(`/lib/python${major}.${minor}/lib-dynload/`);
     Module.addRunDependency("install-stdlib");
-    const resp = await fetch(`python${major}.${minor}.zip`);
+    const resp = await fetch(buildValidatedUrl('./', major.toString(), minor.toString()));
     const stdlibBuffer = await resp.arrayBuffer();
     Module.FS.writeFile(
       `/lib/python${major}${minor}.zip`,
