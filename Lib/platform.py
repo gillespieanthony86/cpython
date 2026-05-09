@@ -332,6 +332,9 @@ def _wmi_query(table, *keys):
         "OS": "Win32_OperatingSystem",
         "CPU": "Win32_Processor",
     }[table]
+    for key in keys:
+        if not re.match(r'^[a-zA-Z0-9_]+$', str(key)):
+            raise ValueError("Invalid input")
     try:
         data = _wmi.exec_query("SELECT {} FROM {}".format(
             ",".join(keys),
