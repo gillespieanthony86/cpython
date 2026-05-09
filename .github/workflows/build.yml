@@ -120,7 +120,7 @@ jobs:
       - name: Add ccache to PATH
         run: echo "PATH=/usr/lib/ccache:$PATH" >> "$GITHUB_ENV"
       - name: Configure ccache action
-        uses: hendrikmuhs/ccache-action@v1.2
+        uses: hendrikmuhs/ccache-action@5ebbd400eff9e74630f759d94ddd7b6c26299639 # v1.2
         with:
           save: false
       - name: Configure CPython
@@ -577,7 +577,7 @@ jobs:
     - name: Install dependencies
       run: sudo ./.github/workflows/posix-deps-apt.sh
     - name: Set up GCC-10 for ASAN
-      uses: egor-tensin/setup-gcc@v1
+      uses: egor-tensin/setup-gcc@eaa888eb19115a521fa72b65cd94fe1f25bbcaac # v1
       with:
         version: 10
     - name: Configure OpenSSL env vars
@@ -692,12 +692,12 @@ jobs:
     steps:
       - name: Build fuzzers (${{ matrix.sanitizer }})
         id: build
-        uses: google/oss-fuzz/infra/cifuzz/actions/build_fuzzers@master
+        uses: google/oss-fuzz/infra/cifuzz/actions/build_fuzzers@c4ba43bddbf3043c18ebc8f8d0fa16e95e7a41cb # master
         with:
           oss-fuzz-project-name: cpython3
           sanitizer: ${{ matrix.sanitizer }}
       - name: Run fuzzers (${{ matrix.sanitizer }})
-        uses: google/oss-fuzz/infra/cifuzz/actions/run_fuzzers@master
+        uses: google/oss-fuzz/infra/cifuzz/actions/run_fuzzers@c4ba43bddbf3043c18ebc8f8d0fa16e95e7a41cb # master
         with:
           fuzz-seconds: 600
           oss-fuzz-project-name: cpython3
