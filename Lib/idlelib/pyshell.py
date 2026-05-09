@@ -18,6 +18,7 @@ if sys.platform == 'win32':
 from tkinter import messagebox
 
 from code import InteractiveInterpreter
+import ast
 import itertools
 import linecache
 import os
@@ -277,7 +278,7 @@ class PyShellEditorWindow(EditorWindow):
                 lines = fp.readlines()
             for line in lines:
                 if line.startswith(filename + '='):
-                    breakpoint_linenumbers = eval(line[len(filename)+1:])
+                    breakpoint_linenumbers = ast.literal_eval(line[len(filename)+1:])
                     for breakpoint_linenumber in breakpoint_linenumbers:
                         self.set_breakpoint(breakpoint_linenumber)
 

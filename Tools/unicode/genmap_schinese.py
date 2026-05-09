@@ -4,6 +4,7 @@
 # Original Author:  Hye-Shik Chang <perky@FreeBSD.org>
 # Modified Author:  Donghee Na <donghee.na92@gmail.com>
 #
+import ast
 import os
 import re
 
@@ -40,8 +41,8 @@ def parse_gb18030map(fo):
         if i < 0xd800 or i > 0xdfff: # exclude unicode surrogate area
             gbuni[i] = None
     for uni, native in re_gb18030ass.findall(fo.read()):
-        uni = eval('0x'+uni)
-        native = [eval('0x'+u) for u in native.split()]
+        uni = ast.literal_eval('0x'+uni)
+        native = [ast.literal_eval('0x'+u) for u in native.split()]
         if len(native) <= 2:
             del gbuni[uni]
         if len(native) == 2: # we can decode algorithmically for 1 or 4 bytes
