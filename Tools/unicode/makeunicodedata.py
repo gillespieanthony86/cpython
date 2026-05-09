@@ -28,12 +28,14 @@
 
 import dataclasses
 import os
+import re
 import sys
 import zipfile
 
 from functools import partial
 from textwrap import dedent
 from typing import Iterator, List, Optional, Set, Tuple
+from urllib.parse import urlparse, urlunparse
 
 SCRIPT = os.path.normpath(sys.argv[0])
 VERSION = "3.3"
@@ -794,15 +796,43 @@ def merge_old_version(version, new, old):
 
 DATA_DIR = os.path.join('Tools', 'unicode', 'data')
 
+def build_validated_unicode_url(base_url: str, version_segment: str, template_segment: str) -> str:
+    try:
+        # Minimal path validation
+        if "/../" in base_url or re.search(r"/%2e%2e/", base_url, re.IGNORECASE):
+            raise ValueError("Invalid path")
+        
+        parsed = urlparse(base_url)
+        
+        # Validate path parameters
+        if not re.fullmatch(r"[A-Za-z0-9._-]+", version_segment):
+            raise ValueError("Invalid parameter")
+        if not re.fullmatch(r"[A-Za-z0-9._-]+", template_segment):
+            raise ValueError("Invalid parameter")
+        
+        # Rebuild path from fixed literals + validated segments
+        if "3.2-Update" in parsed.path:
+            parsed = parsed._replace(path=f"/Public/3.2-Update/{template_segment}")
+        else:
+            parsed = parsed._replace(path=f"/Public/{version_segment}/ucd/{template_segment}")
+        
+        return urlunparse(parsed)
+    except Exception:
+        raise ValueError("Invalid URL")
+
 def open_data(template, version):
     local = os.path.join(DATA_DIR, template % ('-'+version,))
     if not os.path.exists(local):
         import urllib.request
         if version == '3.2.0':
             # irregular url structure
-            url = ('https://www.unicode.org/Public/3.2-Update/'+template) % ('-'+version,)
+            base_url = 'https://www.unicode.org/Public/3.2-Update/'
+            template_formatted = template % ('-'+version,)
+            url = build_validated_unicode_url(base_url, version, template_formatted)
         else:
-            url = ('https://www.unicode.org/Public/%s/ucd/'+template) % (version, '')
+            base_url = 'https://www.unicode.org/Public/'
+            template_formatted = template % ('',)
+            url = build_validated_unicode_url(base_url, version, template_formatted)
         os.makedirs(DATA_DIR, exist_ok=True)
         urllib.request.urlretrieve(url, filename=local)
     if local.endswith('.txt'):

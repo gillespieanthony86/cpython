@@ -4,6 +4,7 @@ import argparse
 import contextlib
 import functools
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -11,6 +12,7 @@ import sysconfig
 import hashlib
 import tempfile
 from urllib.request import urlopen
+from urllib.parse import urlparse, urlunparse
 from pathlib import Path
 from textwrap import dedent
 
@@ -172,9 +174,30 @@ def check_shasum(file: str, expected_shasum: str):
         raise RuntimeError(f"Unexpected shasum for {file}")
 
 
+def build_validated_url(url: str) -> str:
+    try:
+        if "/../" in url or re.search(r"/%2e%2e/", url, re.IGNORECASE):
+            raise ValueError("Invalid path")
+        
+        parsed = urlparse(url)
+        
+        if parsed.scheme not in ("http", "https"):
+            raise ValueError("Invalid protocol")
+        if not parsed.hostname:
+            raise ValueError("Invalid host")
+        allowed_domains = ["github.com", "www.bytereef.org"]
+        if parsed.hostname.lower() not in allowed_domains:
+            raise ValueError("Invalid host")
+        
+        return urlunparse(parsed)
+    except Exception:
+        raise ValueError("Invalid URL")
+
+
 def download_and_unpack(working_dir: Path, url: str, expected_shasum: str):
+    validated_url = build_validated_url(url)
     with tempfile.NamedTemporaryFile(suffix=".tar.gz", delete_on_close=False) as tmp_file:
-        with urlopen(url) as response:
+        with urlopen(validated_url) as response:
             shutil.copyfileobj(response, tmp_file)
         tmp_file.close()
         check_shasum(tmp_file.name, expected_shasum)
